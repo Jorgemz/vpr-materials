@@ -9,8 +9,6 @@ import Vapor
 import Leaf
 
 struct WebsiteController: RouteCollection {
-  let acronyms: [Acronym]?
-
   func boot(routes: RoutesBuilder) throws {
     routes.get(use: indexHandler)
   }
@@ -25,4 +23,9 @@ struct WebsiteController: RouteCollection {
       return req.view.render("index", context)
     })
   }
+}
+
+struct IndexContext: Encodable {
+  let title: String
+  let acronyms: [Acronym]?
 }

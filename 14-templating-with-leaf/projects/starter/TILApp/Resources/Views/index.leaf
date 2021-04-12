@@ -22,8 +22,8 @@
       <tbody>
         #for(acronym in acronyms):
           <tr>
-            <td>#(acronym.short)</td>
-            <td>#(acrinym.long)</td>
+            <td><a href="/acronyms/#(acronym.id)">#(acronym.short)</a></td>
+            <td>#(acronym.long)</td>
           </tr>
         #endfor
       </tbody>

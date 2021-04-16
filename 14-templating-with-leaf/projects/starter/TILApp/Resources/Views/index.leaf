@@ -1,15 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-  
-  <head>
-    
-    <meta charset="utf-8" />
-    <title>#(title) | Acronyms</title>
-    
-  </head>
-  
-  <body>
-    
+#extend("base"):
+
+#export("content"):
+
     <h1>Acronyms</h1>
   #if(acronyms):
     <table>
@@ -31,7 +23,8 @@
   #else:
     <h2> there aren't any acronyms yet!</h2>
   #endif
-    
-  </body>
-  
-</html>
+
+#endexport
+
+#endextend
+

@@ -5,8 +5,9 @@
 
     <p>Created by <a href="/users/#(user.id)/">#(user.name)</a></p>
     
-    <a class="btn btn-primary" href="/acronyms/#(acronym.id)/edit" role="button">
-      Edit
-    </a>
+    <form method="post" action="/acronyms/#(acronym.id)/delete">
+      <a class="btn btn-primary" href="/acronyms/#(acronym.id)/edit" role="button">Edit</a>&nbsp;
+      <input class="btn btn-danger" type="submit" value="Delete" />
+    </form>
   #endexport
 #endextend

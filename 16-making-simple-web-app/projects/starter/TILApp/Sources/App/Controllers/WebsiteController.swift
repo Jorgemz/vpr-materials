@@ -40,6 +40,7 @@ struct WebsiteController: RouteCollection {
     routes.post("acronyms", "create", use: createAcronymPostHandler)
     routes.get("acronyms", ":acronymID", "edit", use: editAcronymHandler)
     routes.post("acronyms", ":acronymID", "edit", use: editAcronymPostHandler)
+    routes.post("acronyms", ":acronymID", "delete", use: deleteAcronymHandler)
   }
 
   func indexHandler(_ req: Request) -> EventLoopFuture<View> {
@@ -146,6 +147,15 @@ struct WebsiteController: RouteCollection {
         let redirect = req.redirect(to: "/acronyms/\(id)")
         return acronym.save(on: req.db).transform(to: redirect)
     }
+  }
+  
+  func deleteAcronymHandler(_ req: Request) -> EventLoopFuture<Response> {
+    Acronym
+      .find(req.parameters.get("acronymID"), on: req.db)
+      .unwrap(or: Abort(.notFound)).flatMap { acronym in
+        acronym.delete(on: req.db)
+          .transform(to: req.redirect(to: "/"))
+      }
   }
 }
 

@@ -38,6 +38,8 @@ struct WebsiteController: RouteCollection {
     routes.get("categories", ":categoryID", use: categoryHandler)
     routes.get("acronyms", "create", use: createAcronymHandler)
     routes.post("acronyms", "create", use: createAcronymPostHandler)
+    routes.get("acronyms", ":acronymID", "edit", use: editAcronymHandler)
+    routes.post("acronyms", ":acronymID", "edit", use: editAcronymPostHandler)
   }
 
   func indexHandler(_ req: Request) -> EventLoopFuture<View> {
@@ -114,6 +116,37 @@ struct WebsiteController: RouteCollection {
         return req.redirect(to: "/acronyms/\(id)")
     }
   }
+  
+  func editAcronymHandler(_ req: Request) -> EventLoopFuture<View> {
+    let acronymFuture = Acronym
+      .find(req.parameters.get("acronymID"), on: req.db)
+      .unwrap(or: Abort(.notFound))
+    let userQuery = User.query(on: req.db).all()
+    return acronymFuture.and(userQuery)
+      .flatMap { acronym, users in
+        let context = EditAcronymContext(
+          acronym: acronym,
+          users: users)
+        return req.view.render("createAcronym", context)
+    }
+  }
+  
+  func editAcronymPostHandler(_ req: Request) throws -> EventLoopFuture<Response> {
+    let updateData = try req.content.decode(CreateAcronymData.self)
+    return Acronym
+      .find(req.parameters.get("acronymID"), on: req.db)
+      .unwrap(or: Abort(.notFound)).flatMap { acronym in
+        acronym.short = updateData.short
+        acronym.long = updateData.long
+        acronym.$user.id = updateData.userID
+        guard let id = acronym.id else {
+          let error = Abort(.internalServerError)
+          return req.eventLoop.future(error: error)
+        }
+        let redirect = req.redirect(to: "/acronyms/\(id)")
+        return acronym.save(on: req.db).transform(to: redirect)
+    }
+  }
 }
 
 struct IndexContext: Encodable {
@@ -152,4 +185,11 @@ struct CategoryContext: Encodable {
 struct CreateAcronymContext: Encodable {
   let title = "Create An Acronym"
   let users: [User]
+}
+
+struct EditAcronymContext: Encodable {
+  let title = "Edit Acronym"
+  let acronym: Acronym
+  let users: [User]
+  let editing = true
 }

@@ -100,7 +100,7 @@ struct WebsiteController: RouteCollection {
     }
   }
 
-  func createAcronymPostHandler(_ req: Request) throws -> EventLoopFuture<Response> {
+  func createAcronymPostHandler1(_ req: Request) throws -> EventLoopFuture<Response> {
     let data = try req.content.decode(CreateAcronymData.self)
     let acronym = Acronym(short: data.short, long: data.long, userID: data.userID)
     return acronym.save(on: req.db).flatMapThrowing {
@@ -131,6 +131,31 @@ struct WebsiteController: RouteCollection {
       }
       let redirect = req.redirect(to: "/acronyms/\(id)")
       return acronym.save(on: req.db).transform(to: redirect)
+    }
+  }
+  
+  func createAcronymPostHandler(_ req: Request) throws -> EventLoopFuture<Response> {
+    let data = try req.content.decode(CreateAcronymFormData.self)
+    let acronym = Acronym(
+      short: data.short,
+      long: data.long,
+      userID: data.userID)
+    return acronym.save(on: req.db).flatMap {
+      guard let id = acronym.id else {
+        return req.eventLoop
+          .future(error: Abort(.internalServerError))
+      }
+      var categorySaves: [EventLoopFuture<Void>] = []
+      for category in data.categories ?? [] {
+        categorySaves.append(
+          Category.addCategory(
+            category,
+            to: acronym,
+            on: req))
+      }
+      let redirect = req.redirect(to: "/acronyms/\(id)")
+      return categorySaves.flatten(on: req.eventLoop)
+        .transform(to: redirect)
     }
   }
 
@@ -184,4 +209,11 @@ struct EditAcronymContext: Encodable {
   let acronym: Acronym
   let users: [User]
   let editing = true
+}
+
+struct CreateAcronymFormData: Content {
+  let userID: UUID
+  let short: String
+  let long: String
+  let categories: [String]?
 }
